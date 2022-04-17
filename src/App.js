@@ -2,7 +2,7 @@ import './App.css';
 import * as React from 'react';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
+import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
@@ -36,7 +36,18 @@ function App() {
   {value: 'W', exists: false, attempted: false},
   {value: 'X', exists: false, attempted: false},
   {value: 'Y', exists: false, attempted: false},
-  {value: 'Z', exists: false, attempted: false}];
+  {value: 'Z', exists: false, attempted: false},
+  {value: '0', exists: false, attempted: false},
+  {value: '1', exists: false, attempted: false},
+  {value: '2', exists: false, attempted: false},
+  {value: '3', exists: false, attempted: false},
+  {value: '4', exists: false, attempted: false},
+  {value: '5', exists: false, attempted: false},
+  {value: '6', exists: false, attempted: false},
+  {value: '7', exists: false, attempted: false},
+  {value: '8', exists: false, attempted: false},
+  {value: '9', exists: false, attempted: false},
+  {value: ' ', exists: false, attempted: false}];
   const [wordsFieldError, setWordsFieldError] = React.useState( { error: false, text: '' } )
   const [blanksList, setBlanksList] = React.useState( initBlanks );
   const [availableLettersList, setAvailableLettersList] = React.useState( initAvailLetters );
@@ -45,6 +56,8 @@ function App() {
   const [submittedWords, setSubmittedWords] = React.useState([]);
   const [showHangmanImage, setShowHangmanImage] = React.useState(false);
   const [misses, setMisses] = React.useState(0);
+
+  const regexForAllowedChars = /[a-zA-Z0-9 ]/;
 
 
   let handleLetterBoxClick = ( letter ) => {
@@ -96,7 +109,7 @@ function App() {
 
   const handleChange = (event) => {
     setSelectedWords(event.target.value);
-    if( /[0-9 ]/.test(event.target.value) ) {
+    if( !regexForAllowedChars.test(event.target.value) ) {
       setWordsFieldError({ error: true, text: 'Only alphabets allowed'});
     }else {
       setWordsFieldError({ error: false, text: ''});
@@ -105,7 +118,7 @@ function App() {
 
   const submitWords = ( event ) => {
     let sw = selectedWords.toUpperCase().trim().split('\n');
-    setSubmittedWords(sw);
+    setSubmittedWords( sw );
     selectHiddenWord( sw );
     setShowHangmanImage(true);
   }
@@ -134,7 +147,7 @@ function App() {
     setSubmittedWords( newSubmittedWords );
     selectHiddenWord( newSubmittedWords );
     setAvailableLettersList( initAvailLetters );
-    setMisses(0);
+    //setMisses(0);
   }
 
   const createBlankList = ( blankedWord ) => {
@@ -221,31 +234,41 @@ function App() {
     }
   }
 
+  const handleKeyDown = ( event ) => {
+    if( submittedWords.length > 0 && ( event.keyCode  === 32 || ( event.keyCode >= 48 && event.keyCode <= 90) ) ) {
+      let pressedKey = { value: event.key.trim().toUpperCase() };
+      handleLetterBoxClick( pressedKey );
+    }
+  }
+
   React.useEffect(() => {
-    createBlankList( hiddenWord );  
-  }, []);
+    createBlankList( hiddenWord ); 
+    document.addEventListener("keydown", handleKeyDown ); 
+  }, [submittedWords]);
   
   return (
     <div className="App">
       <React.Fragment>
         <CssBaseline />
-        <Container maxWidth="lg">
-          <Box sx={{ bgcolor: '#cfe8fc', height: '100vh' }}>
-            <h1>Hangman</h1>
-            <Box sx={{ height: '70%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Box sx={{ width: '30%', height: '50%', backgroundColor: 'white', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center'}}>
-                {
-                  availableLettersList.map( ( letter ) => (
-                    <LetterBox value={ letter } onLetterBoxClick={ handleLetterBoxClick }></LetterBox>
-                  ))
-                }
+        <Box sx={{ flexGrow: 1, bgcolor: '#cfe8fc', height: '100vh' }}>
+          <h1>Hangman</h1>
+          <Grid container rowSpacing={2} columnSpacing={{ xs: 1, sm: 2, md: 8 }}>
+            <Grid item xs={12} md={4}>
+              <Box sx={{ backgroundColor: 'white', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+                    {
+                        availableLettersList.map((letter) => (
+                            <LetterBox value={letter} onLetterBoxClick={handleLetterBoxClick}></LetterBox>
+                        ))
+                    }
               </Box>
-              <Box sx={{ width: '60%', backgroundColor: 'white'}}>
-                { !showHangmanImage && <Box
-                  component="form"
-                  noValidate
-                  autoComplete="off"
-                  sx={{display: 'flex', flexDirection: 'row', justifyContent: 'space-around', marginTop: '10px' }}
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <Box sx={{ backgroundColor: 'white' }}>
+                {!showHangmanImage && <Box
+                    component="form"
+                    noValidate
+                    autoComplete="off"
+                    sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-around', marginTop: '10px' }}
                 >
                   <div>
                     <TextField
@@ -255,29 +278,32 @@ function App() {
                       maxRows={4}
                       value={selectedWords}
                       onChange={handleChange}
-                      />
+                    />
                   </div>
-                  <Button sx={{ height: 50}} variant="contained" onClick={submitWords}>Submit</Button>
+                  <Button sx={{ height: 50 }} variant="contained" onClick={submitWords}>Submit</Button>
                 </Box>
                 }
-                { showHangmanImage && <Canvas id="myCanvasComp" width="500" height="500" draw={draw} misscount={misses}/> }
-                
+                {showHangmanImage && <Canvas id="myCanvasComp" width="500" height="500" draw={draw} misscount={misses} />}
               </Box>
-            </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', height: '15%', alignItems: 'flex-end'}}>
-              {blanksList.map( ( blank, index ) => (
-                  <CharBox value={ blank }></CharBox>               
-                ))
-              }
-            </Box>
-
-            <Stack sx={{justifyContent: 'center', marginTop: '10px'}} direction="row" spacing={6}>
-              <Button sx={{ height: 50}} variant="contained" onClick={revealWord}>Reveal</Button>
-              {submittedWords.length === 1 && <Button sx={{ height: 50}} variant="contained" onClick={resetHangman}>Reset</Button>}
-              {submittedWords.length > 1 && <Button sx={{ height: 50}} variant="contained" onClick={nextWord}>Next</Button>}
-            </Stack>
-          </Box>
-        </Container>
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end' }}>
+                {blanksList.map((blank, index) => (
+                      <CharBox value={blank}></CharBox>
+                    ))
+                }
+              </Box>     
+            </Grid>
+            <Grid item xs={12}>
+              <Box xs={12} sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: 2 }}>
+                  <Button sx={{ height: 50 }} variant="contained" onClick={revealWord}>Reveal</Button>
+                  {submittedWords.length === 1 && <Button sx={{ height: 50 }} variant="contained" onClick={resetHangman}>Reset</Button>}
+                  {submittedWords.length > 1 && <Button sx={{ height: 50 }} variant="contained" onClick={nextWord}>Next</Button>}
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+        
       </React.Fragment>      
     </div>
   );
